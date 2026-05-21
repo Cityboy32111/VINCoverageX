@@ -1,0 +1,37 @@
+# Secrets — NEVER commit
+.env
+*.env
+!*.env.example
+config/.env
+config/*.env
+!config/.env.example
+*.key
+*.pem
+secrets/
+credentials*.json
+
+# Local proof-of-concept data (do not commit collected data)
+data/raw/
+data/processed/
+data/final/
+outputs/
+logs/
+*.sqlite
+*.sqlite3
+*.db
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+*.swp
