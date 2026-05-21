@@ -44,14 +44,22 @@
       "tier": "SAFE_PUBLIC",
       "verify_before_run": ["input_schema", "pricing", "output_fields", "robots_txt", "terms"],
       "test_dealer_limit": 3,
+      "_extraction_notes": "htmlTransformer=none + empty removeElementsCssSelector keep <script>/JSON-LD/data-vin in saved html so the parser can read VINs. Without these, WCC strips scripts and readability-cleans the page, which is why VIN yield is thin.",
       "input_template": {
         "startUrls": [],
         "crawlerType": "playwright:firefox",
-        "maxCrawlPages": 200,
-        "maxCrawlDepth": 3,
+        "maxCrawlPages": 150,
+        "maxCrawlDepth": 2,
         "saveHtml": true,
-        "respectRobotsTxtFile": true
-      }
+        "htmlTransformer": "none",
+        "removeElementsCssSelector": "",
+        "respectRobotsTxtFile": true,
+        "initialConcurrency": 2
+      },
+      "optional_inventory_url_globs": [
+        "**/inventory/**", "**/used/**", "**/used-vehicles/**", "**/vehicle/**",
+        "**/vehicledetails/**", "**/vdp/**", "**/detail/**", "**/cars/**"
+      ]
     },
     "search_actor": {
       "actor_id": "apify~google-search-scraper",

@@ -17,7 +17,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from coveragex import db  # noqa: E402
 from coveragex.config import RAW_DIR, ensure_dirs, source_config  # noqa: E402
-from coveragex.extract import extract_vins, parse_vehicle_listings_from_html  # noqa: E402
+from coveragex.extract import parse_apify_item  # noqa: E402
 from coveragex.vin import normalize_vin  # noqa: E402
 
 
@@ -42,15 +42,7 @@ def _store_listing(conn, dealer_id: str, rec: dict) -> None:
 def _parse_items(items: list[dict]) -> list[dict]:
     records = []
     for it in items:
-        url = it.get("url") or it.get("loadedUrl") or ""
-        html = it.get("html") or ""
-        if html:
-            records += parse_vehicle_listings_from_html(html, url)
-        else:
-            text = it.get("text") or it.get("markdown") or ""
-            for vin in extract_vins(text):
-                records.append({"vin": vin, "listing_url": url, "source_url": url,
-                                "listing_text": text[:500], "source": "text"})
+        records += parse_apify_item(it)
     return records
 
 
@@ -84,7 +76,7 @@ def run(conn, test: bool = False, limit: int | None = None) -> dict:
             conn.commit()
             raise SystemExit(f"\n[BLOCKER] {e}\nCollected {total_vins} VINs before failure. No data fabricated.")
 
-        (RAW_DIR / f"inventory_{d['dealer_id']}.json").write_text(json.dumps(items, indent=2)[:5_000_000])
+        (RAW_DIR / f"inventory_{d['dealer_id']}.json").write_text(json.dumps(items[:3000], indent=2))
         records = _parse_items(items)
         for rec in records:
             _store_listing(conn, d["dealer_id"], rec)
