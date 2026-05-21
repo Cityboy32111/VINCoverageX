@@ -1,0 +1,105 @@
+{
+  "_note": "Phase 1 source + collection config. Apify actor ids/inputs are templates to verify (input schema, pricing, output fields, terms) before running, per phase1_plan.md.",
+
+  "market": {
+    "name": "Los Angeles County, CA",
+    "state": "CA",
+    "counties": ["Los Angeles", "Orange", "Riverside", "San Bernardino", "Ventura"],
+    "target_dealer_count": 40,
+    "min_dealer_count": 25,
+    "target_valid_vins": 500,
+    "dealer_type_focus": ["independent used", "franchise used"]
+  },
+
+  "nhtsa": {
+    "vpic_base": "https://vpic.nhtsa.dot.gov/api",
+    "recalls_base": "https://api.nhtsa.gov/recalls/recallsByVehicle",
+    "complaints_base": "https://api.nhtsa.gov/complaints/complaintsByVehicle",
+    "rate_limit_per_sec": 5,
+    "tier": "SAFE_PUBLIC"
+  },
+
+  "apify": {
+    "_usage_rule": "Use Apify for dealer discovery + dynamic inventory pages. Do NOT use for NHTSA (official API) or static HTML.",
+    "dealer_discovery_actor": {
+      "actor_id": "compass~crawler-google-places",
+      "purpose": "Google Maps dealer discovery (business listings only)",
+      "tier": "SAFE_PUBLIC",
+      "verify_before_run": ["input_schema", "pricing", "output_fields", "terms"],
+      "input_template": {
+        "searchStringsArray": ["used car dealers in Los Angeles, CA"],
+        "maxCrawledPlacesPerSearch": 50,
+        "language": "en",
+        "skipClosedPlaces": true
+      },
+      "output_field_map": {
+        "title": "dealer_name", "website": "website", "address": "street_address",
+        "city": "city", "state": "state", "postalCode": "zip",
+        "phone": "phone", "categoryName": "dealer_type", "url": "source_url"
+      }
+    },
+    "inventory_crawler_actor": {
+      "actor_id": "apify~website-content-crawler",
+      "purpose": "Crawl public dealer inventory + VDP pages (dynamic rendering)",
+      "tier": "SAFE_PUBLIC",
+      "verify_before_run": ["input_schema", "pricing", "output_fields", "robots_txt", "terms"],
+      "test_dealer_limit": 3,
+      "input_template": {
+        "startUrls": [],
+        "crawlerType": "playwright:firefox",
+        "maxCrawlPages": 200,
+        "maxCrawlDepth": 3,
+        "saveHtml": true,
+        "respectRobotsTxtFile": true
+      }
+    },
+    "search_actor": {
+      "actor_id": "apify~google-search-scraper",
+      "purpose": "Resolve dealer inventory URLs / fill discovery gaps",
+      "tier": "SAFE_PUBLIC"
+    },
+    "repair_forum_actor": {
+      "actor_id": "apify~website-content-crawler",
+      "purpose": "SAMPLE-ONLY public owner-forum repair themes (short spans, demo-labeled)",
+      "tier": "SAMPLE_ONLY",
+      "max_spans_per_model": 5,
+      "max_span_chars": 240
+    }
+  },
+
+  "collection": {
+    "request_timeout_sec": 20,
+    "rate_limit_per_host_per_sec": 1,
+    "respect_robots_txt": true,
+    "max_pages_per_dealer": 200,
+    "user_agent": "CoverageX-SignalGraph/0.1 (PoC; contact: ops@accel.example)"
+  },
+
+  "vin_extraction": {
+    "regex": "\\b[A-HJ-NPR-Z0-9]{17}\\b",
+    "html_attributes": ["data-vin", "data-vehicle-vin", "vin"],
+    "json_keys": ["vin", "Vin", "VIN", "vehicleVin"]
+  },
+
+  "repair_theme_keywords": {
+    "transmission": ["transmission", "cvt", "shudder", "gear slip", "torque converter", "shifting"],
+    "electrical": ["electrical", "battery drain", "wiring", "infotainment", "sensor", "module"],
+    "ac_climate": ["a/c", "air conditioning", "ac compressor", "climate", "heater core"],
+    "powertrain": ["engine", "timing chain", "oil consumption", "head gasket", "turbo", "misfire"],
+    "suspension": ["suspension", "control arm", "strut", "bushing", "wheel bearing"],
+    "brakes": ["brake", "rotor", "abs", "caliper"],
+    "hybrid_ev": ["hybrid battery", "inverter", "high voltage", "charging", "ev battery"]
+  },
+
+  "competitors": {
+    "_note": "Public product pages only (SAFE PUBLIC); summarize positioning, do not copy proprietary text verbatim.",
+    "names": ["Endurance", "CARCHEX", "CarShield", "Olive", "Toco"]
+  },
+
+  "source_rights_tiers": {
+    "SAFE_PUBLIC": "Use freely",
+    "SAMPLE_ONLY": "Short demo-labeled spans only",
+    "LICENSE_REQUIRED": "Do not collect in PoC; document production path",
+    "DO_NOT_USE": "Never collect"
+  }
+}

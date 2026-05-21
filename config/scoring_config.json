@@ -1,0 +1,140 @@
+{
+  "scoring_version": "phase1-v1",
+  "_note": "All scores are 0-100 proxy/candidate scores, not actuarial. See docs/scoring_methodology.md.",
+
+  "coverage_readiness": {
+    "weights": {
+      "mileage_fit": 0.30,
+      "age_fit": 0.20,
+      "repair_cost_exposure": 0.20,
+      "class_lift": 0.15,
+      "warranty_gap": 0.10,
+      "data_completeness": 0.05
+    },
+    "ready_threshold": 70,
+    "watch_threshold": 45
+  },
+
+  "repair_risk": {
+    "weights": {
+      "mileage_risk": 0.25,
+      "age_risk": 0.20,
+      "class_risk": 0.15,
+      "powertrain_complexity": 0.15,
+      "recall_component": 0.15,
+      "public_complaint": 0.10
+    },
+    "high_threshold": 65,
+    "moderate_threshold": 40,
+    "neutral_complaint_score": 50,
+    "mileage_risk_full_at": 200000,
+    "age_risk_full_at": 20
+  },
+
+  "prime_mileage_min": 40000,
+  "prime_mileage_max": 130000,
+  "prime_age_min": 4,
+  "prime_age_max": 12,
+
+  "class_lift": {
+    "luxury": 95, "truck": 85, "suv": 85, "van": 60,
+    "sedan": 45, "coupe": 50, "hatchback": 40, "wagon": 50, "default": 50
+  },
+  "class_risk": {
+    "luxury": 90, "truck": 70, "suv": 70, "van": 60,
+    "sedan": 45, "coupe": 55, "hatchback": 40, "wagon": 50, "default": 50
+  },
+  "ev_hybrid_class_bonus": 15,
+
+  "powertrain_complexity": {
+    "base": 40,
+    "turbo": 20, "supercharged": 20, "twin-turbo": 25,
+    "cvt": 15, "awd": 12, "4wd": 12, "4x4": 12,
+    "diesel": 15, "electric": 20, "hybrid": 15, "plug-in": 18,
+    "cap": 100
+  },
+
+  "luxury_makes": [
+    "audi","bmw","mercedes-benz","mercedes","lexus","acura","infiniti",
+    "cadillac","lincoln","porsche","jaguar","land rover","range rover",
+    "volvo","genesis","maserati","tesla","alfa romeo","bentley","rolls-royce"
+  ],
+  "truck_body_keywords": ["truck","pickup","cab","chassis"],
+  "suv_body_keywords": ["sport utility","suv","crossover","cuv","multipurpose"],
+  "van_body_keywords": ["van","minivan"],
+  "sedan_body_keywords": ["sedan","saloon"],
+  "coupe_body_keywords": ["coupe","convertible","roadster"],
+  "hatchback_body_keywords": ["hatchback"],
+  "wagon_body_keywords": ["wagon"],
+  "ev_fuel_keywords": ["electric","bev"],
+  "hybrid_fuel_keywords": ["hybrid","phev","plug-in"],
+
+  "recall_severity": {
+    "high_components": ["airbag","brake","steering","fuel","fire","powertrain","engine","seat belt"],
+    "high_count_threshold": 5,
+    "medium_count_threshold": 2
+  },
+
+  "plan_fit": {
+    "executive_repair_risk": 80,
+    "premium_repair_risk": 65,
+    "signature_repair_risk_min": 40,
+    "executive_classes": ["luxury"],
+    "premium_classes": ["truck","suv"],
+    "executive_fuel": ["electric"]
+  },
+
+  "exclusion_review": {
+    "high_mileage": 150000,
+    "very_old_age": 15,
+    "commercial_keywords": ["fleet","commercial","former rental","ex-rental","cargo","box truck","taxi"],
+    "rideshare_keywords": ["uber","lyft","rideshare"],
+    "modification_keywords": ["modified","lifted","custom build","aftermarket turbo","tuned"],
+    "weights": {
+      "high_mileage": 30, "very_old": 25, "commercial": 25,
+      "rideshare": 20, "salvage": 30, "modifications": 10,
+      "odometer_issue": 25, "severe_recall": 15
+    },
+    "_licensed_only_flags": ["salvage", "odometer_issue"]
+  },
+
+  "buyer_urgency": {
+    "weights": {"coverage_readiness": 0.5, "repair_risk": 0.3, "warranty_gap": 0.2},
+    "suppress_if_exclusion_over": 70
+  },
+
+  "dealer_opportunity": {
+    "weights": {
+      "coverage_ready_share": 0.30,
+      "inventory_count": 0.15,
+      "high_repair_risk_count": 0.20,
+      "truck_suv_luxury_share": 0.15,
+      "prime_mileage_share": 0.10,
+      "location_priority": 0.05,
+      "data_completeness": 0.05
+    },
+    "inventory_count_saturation": 200,
+    "high_repair_risk_saturation": 40,
+    "priority_threshold": 70,
+    "qualified_threshold": 50
+  },
+
+  "market_location_priority": {
+    "los angeles": 1.0,
+    "orange": 0.9,
+    "san diego": 0.85,
+    "riverside": 0.8,
+    "san bernardino": 0.8,
+    "ventura": 0.8,
+    "default": 0.6
+  },
+
+  "pitch_thresholds": {
+    "truck_suv_share_high": 0.35,
+    "luxury_share_high": 0.2,
+    "prime_mileage_share_high": 0.45,
+    "ev_share_high": 0.1,
+    "recall_density_high": 1.5,
+    "coverage_ready_share_high": 0.35
+  }
+}
