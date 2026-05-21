@@ -62,33 +62,50 @@ def run(conn, test: bool = False, limit: int | None = None) -> dict:
         raise SystemExit("No dealers with inventory_url/website. Run discover_dealers.py first.")
 
     client = ApifyClient()
-    total_vins = 0
-    for d in dealers:
+    total_records = 0
+    all_vins: set[str] = set()
+    errors: list[str] = []
+    n = len(dealers)
+    for i, d in enumerate(dealers, 1):
         start = d["inventory_url"] or d["website"]
         run_input = dict(cfg["input_template"])
         run_input["startUrls"] = [{"url": start}]
         run_input["maxCrawlPages"] = min(coll["max_pages_per_dealer"], cfg["input_template"]["maxCrawlPages"])
+        print(f"\n[dealer {i}/{n}] {d['dealer_name']}", flush=True)
+        print(f"    inventory_url: {start}", flush=True)
         try:
             items, meta = client.run_actor(cfg["actor_id"], run_input, timeout=900)
         except ApifyError as e:
+            msg = str(e).splitlines()[0]
+            print(f"    ERROR: {msg}", flush=True)
             db.log_run(conn, script_name="collect_inventory.py", source_name=d["dealer_name"],
                        apify_actor=cfg["actor_id"], status="error", error_detail=str(e))
             conn.commit()
-            raise SystemExit(f"\n[BLOCKER] {e}\nCollected {total_vins} VINs before failure. No data fabricated.")
+            errors.append(f"{d['dealer_name']}: {msg}")
+            continue
 
-        (RAW_DIR / f"inventory_{d['dealer_id']}.json").write_text(json.dumps(items[:3000], indent=2))
+        raw_path = RAW_DIR / f"inventory_{d['dealer_id']}.json"
+        raw_path.write_text(json.dumps(items[:3000], indent=2))
         records = _parse_items(items)
         for rec in records:
             _store_listing(conn, d["dealer_id"], rec)
         conn.commit()
-        total_vins += len(records)
+        vins = {rec["vin"] for rec in records}
+        total_records += len(records)
+        all_vins |= vins
+        print(f"    pages crawled: {len(items)}", flush=True)
+        print(f"    records parsed: {len(records)} | unique VINs: {len(vins)}", flush=True)
+        print(f"    raw saved: {raw_path}", flush=True)
         db.log_run(conn, script_name="collect_inventory.py", source_name=d["dealer_name"],
                    apify_actor=cfg["actor_id"], apify_run_id=meta.get("id"),
                    records_in=len(items), records_out=len(records),
-                   notes=f"{len(records)} listings parsed from {len(items)} pages")
-        print(f"  {d['dealer_name']}: {len(records)} listings from {len(items)} pages")
+                   notes=f"{len(records)} listings ({len(vins)} unique VINs) from {len(items)} pages")
 
-    return {"dealers": len(dealers), "listings": total_vins}
+    if errors:
+        print(f"\n{len(errors)} dealer(s) errored:", flush=True)
+        for e in errors:
+            print(f"  - {e}", flush=True)
+    return {"dealers": n, "listings": total_records, "unique_vins": len(all_vins), "errors": errors}
 
 
 def main() -> None:
@@ -100,7 +117,8 @@ def main() -> None:
     db.init_db(conn)
     r = run(conn, test=args.test, limit=args.limit)
     conn.close()
-    print(f"Inventory: {r['listings']} listings across {r['dealers']} dealers.")
+    print(f"\nInventory: {r['listings']} listings, {r['unique_vins']} unique VINs across "
+          f"{r['dealers']} dealers ({len(r['errors'])} errored).")
 
 
 if __name__ == "__main__":
